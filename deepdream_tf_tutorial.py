@@ -129,6 +129,12 @@ channel = 139 # picking some feature channel to visualize
 img_noise = np.random.uniform(size=(224,224,3)) + 100.0
 
 print('make noise:',img_noise.shape)
+# save img_noise
+#a = np.uint8(np.clip(a, 0, 1)*255)
+#PIL.Image.fromarray(a).save(f, fmt)
+s_img = PIL.Image.fromarray(img_noise)
+s_img.save('/home/roboworks/deepdream/image/img_noise.jpg')
+sys.exit()
 
 count = []
 layer_name = ''
@@ -139,8 +145,6 @@ def showarray(a, fmt='jpeg' ,i=0):
     f = BytesIO()
     PIL.Image.fromarray(a).save(f, fmt)
     s = PIL.Image.fromarray(a)
-    #print(len(count)%4)
-    #if (len(count)/4) == 0  and len(count) > 3:
     if len(count) > 3 and len(count)%4 == 0:
         s.save('/home/roboworks/deepdream/image/{}/{}.jpg'.format(input_image,layer_name))
     #display(Image(data=f.getvalue()))
