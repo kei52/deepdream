@@ -31,7 +31,7 @@ sess = tf.InteractiveSession(graph=graph)
 
 # ready input image
 print('input image:')
-input_image = raw_input()
+input_image = raw_input('>>')
 if os.path.exists('/home/roboworks/deepdream/image/{}'.format(input_image)) == False:
     os.mkdir('/home/roboworks/deepdream/image/{}'.format(input_image))
 img0 = PIL.Image.open('/home/roboworks/deepdream/image/{}.jpg'.format(input_image))

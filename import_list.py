@@ -9,4 +9,4 @@ import time
 import ros
 import cv2
 
-print 'import tensorflow as tf\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom PIL import Image\nimport os\nimport sys\nimport math\nimport time\nimport ros\nimport cv2'
+#print 'import tensorflow as tf\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom PIL import Image\nimport os\nimport sys\nimport math\nimport time\nimport ros\nimport cv2'
