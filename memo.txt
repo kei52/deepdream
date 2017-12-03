@@ -1,4 +1,24 @@
 
-get jpg
-
+JPGフリー素材サイト
 https://www.pakutaso.com/
+
+
+離散フーリエ変換
+http://imagingsolution.net/math/fourier-transform/discrete-fourier-transform/
+
+
+離散フーリエ変換（OpenCV）
+http://labs.eecs.tottori-u.ac.jp/sd/Member/oyamada/OpenCV/html/py_tutorials/py_imgproc/py_transforms/py_fourier_transform/py_fourier_transform.html
+
+
+
+チュートリアル
+https://nbviewer.jupyter.org/github/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/deepdream/deepdream.ipynb
+
+GITHUBにあげた
+https://github.com/kei52/deepdream.git
+
+誰かがやっているスライドシェア
+slideshare
+https://www.slideshare.net/HarumitsuNobuta/deep-dream
+
