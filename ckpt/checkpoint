@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/roboworks/deepdream/ckpt/model.ckpt"
+all_model_checkpoint_paths: "/home/roboworks/deepdream/ckpt/model.ckpt"

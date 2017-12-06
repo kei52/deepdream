@@ -19,9 +19,9 @@ from PIL import Image
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
+
 # ready input image
-#input_image = raw_input('input image:>>')
-input_image = 'cat'
+input_image = raw_input('input image:>>')
 if os.path.exists('/home/roboworks/deepdream/image/{}'.format(input_image)) == False:
     os.mkdir('/home/roboworks/deepdream/image/{}'.format(input_image))
 img0 = PIL.Image.open('/home/roboworks/deepdream/image/{}.jpg'.format(input_image))
@@ -196,13 +196,22 @@ def calc_grad_tiled(img, t_grad, tile_size=512):
     sx, sy = np.random.randint(sz, size=2)
     img_shift = np.roll(np.roll(img, sx, 1), sy, 0)
     grad = np.zeros_like(img)
+    print('h:',h)
+    print('w:',w)    
+    print('sx:',sx)
+    print('sy:',sy)
+    print('img_shift:',img_shift.shape)
+    #print('grad:',grad)
     for y in range(0, max(h-sz//2, sz),sz):
         for x in range(0, max(w-sz//2, sz),sz):
             sub = img_shift[y:y+sz,x:x+sz]
             #print('sub:',sub,'\ntype:',type(sub),'\nlen',len(sub))
             g = sess.run(t_grad, {t_input:sub})
             grad[y:y+sz,x:x+sz] = g
+            print('sub:',sub.shape)
+            print('g=grad[y:y+sz,x:x+sz]:',g.shape)#512 512 3
     #print('sub:',sub,'\ntype:',type(sub),'\nlen',len(sub))
+    print('calc_grad',np.roll(np.roll(grad, -sx, 1), -sy, 0).shape)
     return np.roll(np.roll(grad, -sx, 1), -sy, 0)
 
 
@@ -227,10 +236,10 @@ def render_multiscale(t_obj, img0=img_noise, iter_n=10, step=1.0, octave_n=3, oc
     print('finish render multiscale')
 
 # 複数のパネルごとに処理をおこなうらしい
-render_multiscale(T(layer)[:,:,:,channel])
-sys.exit()
+#render_multiscale(T(layer)[:,:,:,channel])
+#sys.exit()
 
-# k = kernel?
+# k = kernel? hight pass filter
 k = np.float32([1,4,6,4,1])
 k = np.outer(k, k)
 k5x5 = k[:,:,None,None]/k.sum()*np.eye(3, dtype=np.float32)
@@ -318,9 +327,9 @@ render_lapnorm(T(layer)[:,:,:,65]+T(layer)[:,:,:,139], octave_n=4)
 
 # arg layer_name
 def render_deepdream(t_obj,img0=img_noise,iter_n=10, step=1.5, octave_n=4, octave_scale=1.4):
+    
     t_score = tf.reduce_mean(t_obj) # defining the optimization objective
     t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!
-
     # split the image into a number of octaves
     img = img0
     octaves = []
@@ -330,8 +339,10 @@ def render_deepdream(t_obj,img0=img_noise,iter_n=10, step=1.5, octave_n=4, octav
         hi = img-resize(lo, hw)
         img = lo
         octaves.append(hi)
+        print('octaves',type(octaves))#-0.2,
     
     # generate details octave by octave
+    # 4 
     for octave in range(octave_n):
         if octave>0:
             hi = octaves[-octave]
