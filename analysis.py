@@ -20,6 +20,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
 
+#sys.stdout = open("tmep.txt","w")
+
 # ready input image
 input_image = raw_input('input image:>>')
 if os.path.exists('/home/roboworks/deepdream/image/{}'.format(input_image)) == False:
@@ -116,7 +118,7 @@ img_noise = np.random.uniform(size=(224,224,3)) + 100.0
 # 画像の値を表示する為に変換
 count = []
 layer_name = ''
-
+test_name = 'faile'
 
 def showarray(a, fmt='jpeg' ,i=0):
     print('----------showarray----------')
@@ -129,7 +131,7 @@ def showarray(a, fmt='jpeg' ,i=0):
     if len(count) > 3 and len(count)%4 == 0:
         s.save('/home/roboworks/deepdream/image/{}/{}.jpg'.format(input_image,layer_name))
     else:
-        s.save('/home/roboworks/deepdream/image/{}/{}.jpg'.format(input_image,layer_name))
+        s.save('/home/roboworks/deepdream/image/etc/{}.jpg'.format(test_name))
     #display(Image(data=f.getvalue()))
 
 
@@ -166,8 +168,9 @@ def render_naive(t_obj, img0=img_noise, iter_n=20, step=3.0):
         #print('t_score:',t_score)
         #print('t_grad:',t_grad)
         #微分とスコアを走らせる？
-        print('t_grad:',t_grad)
+        print('t_grad:',t_grad,type(t_grad))
         print('t_score:',t_score,type(t_score))
+        print('t_input:',img,type(img))
         g, score = sess.run([t_grad, t_score], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
         print('g:',g)
         print('score:',score,type(t_score))
@@ -185,6 +188,7 @@ def render_naive(t_obj, img0=img_noise, iter_n=20, step=3.0):
 
 #t_objにT(layer)[:,:,:,channel]
 print('T(layer)[:,:,:,channel]:',T(layer)[:,:,:,channel])
+test_name = raw_input('input test name:>>')
 render_naive(T(layer)[:,:,:,channel])
 #sys.exit()
 
@@ -411,6 +415,7 @@ from common import layer_dict
 
 # deepdream ==> input original image
 # can not input ==> ['softmax1','nn1','nn0','output1','head1','head0','output','softmax0','input']
+
 '''
 for i in layer_dict.name1:
     layer_name = i
