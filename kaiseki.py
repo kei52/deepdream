@@ -29,7 +29,7 @@ img0 = PIL.Image.open('/home/roboworks/deepdream/image/{}.jpg'.format(input_imag
 model_fn = 'tensorflow_inception_graph.pb'
 graph = tf.Graph()
 sess = tf.InteractiveSession(graph=graph)
-print('graph',tf.gfile.FastGFile(model_fn,'rb'))
+#print('graph',tf.gfile.FastGFile(model_fn,'rb'))
 # load pb file
 with tf.gfile.FastGFile(model_fn, 'rb') as f:
     graph_def = tf.GraphDef()
@@ -45,8 +45,8 @@ tf.import_graph_def(graph_def, {'input':t_preprocessed})
 
 layers = [op.name for op in graph.get_operations() if op.type=='Conv2D' and 'import/' in op.name]
 feature_nums = [int(graph.get_tensor_by_name(name+':0').get_shape()[-1]) for name in layers]
-print('Number of layers', len(layers))
-print('Total number of feature channels:', sum(feature_nums))
+#print('Number of layers', len(layers))
+#print('Total number of feature channels:', sum(feature_nums))
 
 # TFグラフの視覚化をする為に使う関数(strip_consts rename_nodes show_graph)の準備
 # Helper functions for TF Graph visualization
@@ -116,8 +116,11 @@ img_noise = np.random.uniform(size=(224,224,3)) + 100.0
 # 画像の値を表示する為に変換
 count = []
 layer_name = ''
+
+
 def showarray(a, fmt='jpeg' ,i=0):
-    print('showarray a.shape:',a.shape,type(a))
+    print('----------showarray----------')
+    #print('showarray a.shape:',a.shape,type(a))
     count.append(i)
     a = np.uint8(np.clip(a, 0, 1)*255)
     f = BytesIO()
@@ -125,8 +128,12 @@ def showarray(a, fmt='jpeg' ,i=0):
     s = PIL.Image.fromarray(a)
     if len(count) > 3 and len(count)%4 == 0:
         s.save('/home/roboworks/deepdream/image/{}/{}.jpg'.format(input_image,layer_name))
+    else:
+        s.save('/home/roboworks/deepdream/image/{}/{}.jpg'.format(input_image,layer_name))
     #display(Image(data=f.getvalue()))
-    
+
+
+
 def visstd(a, s=0.1):
     #可視化するための画像範囲を正規化
     '''
@@ -142,13 +149,44 @@ def visstd(a, s=0.1):
 # get layer func
 def T(layer):
     '''Helper for getting layer output tensor'''
-    print('layer:',layer)
-    print('function T(layer):',type(graph.get_tensor_by_name("import/%s:0"%layer)))
+    print('function T(layer):',graph.get_tensor_by_name("import/%s:0"%layer))
     return graph.get_tensor_by_name("import/%s:0"%layer)
 
-'''
-cut1
-'''
+# use t_inputdata
+# 層にわかりやすく反応させるため（値が似ているため）にグレー画像からrgbを計算していく
+def render_naive(t_obj, img0=img_noise, iter_n=20, step=3.0):
+    print('----------render naive----------')
+    print('input_obj_name:',t_obj.shape,type(t_obj))
+    t_score = tf.reduce_mean(t_obj) # defining the optimization objectiveオプティマイズする＝微分して引く更新
+    #t_scoreをt_inputで微分を行う
+    t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!＝微分gradient
+    img = img0.copy()#img0同じ配列を二つ用意し別々に扱うため?
+    for i in range(iter_n):#20回同様の作業を行う
+        #gには[t_grad, t_score],scoreには [t_input:img]
+        #print('t_score:',t_score)
+        #print('t_grad:',t_grad)
+        #微分とスコアを走らせる？
+        print('t_grad:',t_grad)
+        print('t_score:',t_score,type(t_score))
+        g, score = sess.run([t_grad, t_score], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
+        print('g:',g)
+        print('score:',score,type(t_score))
+        # normalizing the gradient, so the same step size should work
+        #print('g:',g)極小の値,stdはgの標準偏差を求めるgの値が小さくなるように処理していく
+        print('g.std()',g.std())
+        g /= g.std()+1e-8         #for different layers and networks g/g.std()+10^-8
+        img += g*step
+        #print(score, end = ' ')
+    #clear_output()
+    #print('img:',img.shape)
+    time.sleep(5)
+    print('visstd(img):',visstd(img).shape)
+    showarray(visstd(img))
+
+#t_objにT(layer)[:,:,:,channel]
+print('T(layer)[:,:,:,channel]:',T(layer)[:,:,:,channel])
+render_naive(T(layer)[:,:,:,channel])
+#sys.exit()
 
 
 
@@ -162,21 +200,21 @@ def tffunc(*argtypes):
     placeholders = list(map(tf.placeholder, argtypes))
     def wrap(f):
         out = f(*placeholders)
-        print('out:',out)
+        #print('out:',out)
         def wrapper(*args, **kw):
             #print('*args:',args)
             #print('*kw:',kw)
             #print('tffunc',out.eval(dict(zip(placeholders, args)), session=kw.get('session')))
-            print('tffunc.shape',out.eval(dict(zip(placeholders, args)), session=kw.get('session')).shape)
+            #print('tffunc.shape',out.eval(dict(zip(placeholders, args)), session=kw.get('session')).shape)
             return out.eval(dict(zip(placeholders, args)), session=kw.get('session'))
         return wrapper
-    return wrap
+    return wrap\
 
 # Helper function that uses TF to resize an image
 def resize(img, size):
     img = tf.expand_dims(img, 0)
-    print('resize_img:',img)
-    print('resize_return',tf.image.resize_bilinear(img, size)[0,:,:,:])
+    #print('resize_img:',img)
+    #print('resize_return',tf.image.resize_bilinear(img, size)[0,:,:,:])
     return tf.image.resize_bilinear(img, size)[0,:,:,:]  
 resize = tffunc(np.float32, np.int32)(resize)
 
@@ -188,39 +226,45 @@ resize = tffunc(np.float32, np.int32)(resize)
 
 
 def calc_grad_tiled(img, t_grad, tile_size=512):
+    #print('----------calc grad tiled----------')
     '''Compute the value of tensor t_grad over the image in a tiled way.
     Random shifts are applied to the image to blur tile boundaries over 
     multiple iterations.'''
-    sz = tile_size
+    #print('img:',img.shape)
+    #sz = tile_size
     h, w = img.shape[:2]
-    sx, sy = np.random.randint(sz, size=2)
+    sx, sy = np.random.randint(tile_size, size=2)
+    #numpy.roll(a, shift, axis=None)
+    #配列の要素を回転させる
+    #print(sx)
+    #print(np.roll(img,sx,1))
     img_shift = np.roll(np.roll(img, sx, 1), sy, 0)
     grad = np.zeros_like(img)
-    print('h:',h)
-    print('w:',w)    
-    print('sx:',sx)
-    print('sy:',sy)
-    print('img_shift:',img_shift.shape)
-    #print('grad:',grad)
-    for y in range(0, max(h-sz//2, sz),sz):
-        for x in range(0, max(w-sz//2, sz),sz):
-            sub = img_shift[y:y+sz,x:x+sz]
+    #print('img_shift:',img_shift)
+    for y in range(0, max(h-tile_size//2, tile_size),tile_size):
+        for x in range(0, max(w-tile_size//2, tile_size),tile_size):
+            sub = img_shift[y:y+tile_size,x:x+tile_size]
             #print('sub:',sub,'\ntype:',type(sub),'\nlen',len(sub))
             g = sess.run(t_grad, {t_input:sub})
-            grad[y:y+sz,x:x+sz] = g
-            print('sub:',sub.shape)
-            print('g=grad[y:y+sz,x:x+sz]:',g.shape)#512 512 3
-    #print('sub:',sub,'\ntype:',type(sub),'\nlen',len(sub))
-    print('calc_grad',np.roll(np.roll(grad, -sx, 1), -sy, 0).shape)
+            #print('t_grad:',t_grad)
+            #print('sub:',sub)
+            grad[y:y+tile_size,x:x+tile_size] = g
+            #print('sub:',sub.shape)
+            #print('g=grad[y:y+sz,x:x+sz]:',g[0][0])#512 512 3
     return np.roll(np.roll(grad, -sx, 1), -sy, 0)
 
 
 
 def render_multiscale(t_obj, img0=img_noise, iter_n=10, step=1.0, octave_n=3, octave_scale=1.4):
+    print('----------render multiscale----------')
+    print('t_obj:',t_obj)
     t_score = tf.reduce_mean(t_obj) # defining the optimization objective
     # t_scoreをt_inputで微分する
+    print('t_score:',t_score)
+    print('t_input:',t_input)
     t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!
-    print('input_img_render_multiscale',img0.shape)
+    print('t_grad:',t_grad)
+    #print('input_img_render_multiscale',img0.shape)
     img = img0.copy()
     for octave in range(octave_n):
         if octave>0:
@@ -237,7 +281,9 @@ def render_multiscale(t_obj, img0=img_noise, iter_n=10, step=1.0, octave_n=3, oc
     print('finish render multiscale')
 
 # 複数のパネルごとに処理をおこなうらしい
+#print('T(layer)[:,:,:,channel]',T(layer)[:,:,:,channel])
 #render_multiscale(T(layer)[:,:,:,channel])
+
 #sys.exit()
 
 # k = kernel? hight pass filter
@@ -340,7 +386,7 @@ def render_deepdream(t_obj,img0=img_noise,iter_n=10, step=1.5, octave_n=4, octav
         hi = img-resize(lo, hw)
         img = lo
         octaves.append(hi)
-        print('octaves',type(octaves))#-0.2,
+        #print('octaves',type(octaves))#-0.2,
     
     # generate details octave by octave
     # 4 
@@ -357,7 +403,7 @@ def render_deepdream(t_obj,img0=img_noise,iter_n=10, step=1.5, octave_n=4, octav
 
 #sys.exit()
 img0 = np.float32(img0)
-print (img0)
+#print (img0)
 #showarray(img0/255.0)
 
 from common import layer_dict
@@ -365,6 +411,7 @@ from common import layer_dict
 
 # deepdream ==> input original image
 # can not input ==> ['softmax1','nn1','nn0','output1','head1','head0','output','softmax0','input']
+'''
 for i in layer_dict.name1:
     layer_name = i
     render_deepdream(tf.square(T(layer_name)), img0)
@@ -378,35 +425,5 @@ for i in layer_dict.name3:
     render_deepdream(tf.square(T(layer_name)), img0)
 
 print('all finish')
-
 '''
-cut1
-# use t_inputdata
-# 層にわかりやすく反応させるため（値が似ているため）にグレー画像からrgbを計算していく
-def render_naive(t_obj, img0=img_noise, iter_n=20, step=1.0):
-    print('input_obj_name:',t_obj)
-    t_score = tf.reduce_mean(t_obj) # defining the optimization objectiveオプティマイズする＝微分して引く更新
-    t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!＝微分gradient
-    img = img0.copy()#img0同じ配列を二つ用意し別々に扱うため?
-    for i in range(iter_n):#20回同様の作業を行う
-        #gには[t_grad, t_score],scoreには [t_input:img]
-        print('t_score:',t_score)
-        print('t_grad:',t_grad)
-        g, score = sess.run([t_grad, t_score], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
-        # normalizing the gradient, so the same step size should work
-        #print('g:',g)極小の値,stdはgの標準偏差を求める
-        print('g.std()',g.std())
-        g /= g.std()+1e-8         #for different layers and networks g/g.std()+10^-8
-        img += g*step
-        #print(score, end = ' ')
-    #clear_output()
-    print('img:',img)
-    time.sleep(5)
-    print('visstd(img):',visstd(img))
-    showarray(visstd(img))
 
-#t_objにT(layer)[:,:,:,channel]
-print('T(layer)[:,:,:,channel]:',T(layer)[:,:,:,channel])
-render_naive(T(layer)[:,:,:,channel])
-#sys.exit()
-'''
