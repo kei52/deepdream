@@ -1,6 +1,7 @@
 #!usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#http://tadaoyamaoka.hatenablog.com/entry/2016/04/10/120305
 import numpy as np
 
 #活性化関数一層目にはシグモイド関数を用いる
