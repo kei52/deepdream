@@ -97,7 +97,7 @@ with tf.Session() as sess:
         perm = np.random.permutation(N)
         total_loss = 0
         for i in range(0, N, BATCH_SIZE):
-            batch_x = train_x[perm[i:i+BATCH_SIZE]]
+            batch_x = train_x[perm[i:i+BATCH_SIZE]]p
             batch_y = train_y[perm[i:i+BATCH_SIZE]]
             total_loss += cross_entropy.eval(feed_dict={x_: batch_x, y_: batch_y})
             train_step.run(feed_dict={x_: batch_x, y_: batch_y})
@@ -109,7 +109,7 @@ with tf.Session() as sess:
         test_accuracy = accuracy.eval(feed_dict={x_: test_x, y_: test_y})
         if (epoch+1) % 1 == 0:
             print 'epoch:\t{}\ttotal loss:\t{}\tvaridation accuracy:\t{}'.format(epoch+1, total_loss, test_accuracy)
-    saver.save(sess,'/home/roboworks/deepdream/ckpt/mnist_model.ckpt')
+    saver.save(sess,'/home/roboworks/Desktop/model.ckpt')
     # 予測
     print '\nPredict'
     idx = np.random.choice(70000-N, 10)
