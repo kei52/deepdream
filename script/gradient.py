@@ -21,16 +21,26 @@ import time
 import tensorflow as tf
 import numpy as np
 
+a = tf.Variable(tf.constant([4.]), name = 'a' )
+
 w = tf.Variable(tf.constant([3.]), name='w')
 b = tf.Variable(tf.constant([1.]), name='b')
 x = tf.Variable(tf.constant([2.]), name='x')
 y_ = tf.Variable(tf.constant([5.]), name='y_')
+image_r = tf.Variable(tf.constant([244.]), name='image_r')
 #print w,b,x,y_
+image_g = tf.Variable(tf.constant([233.]), name='image_g')
+image_b = tf.Variable(tf.constant([222.]), name='image_b')
+image_rgb = tf.Variable(tf.constant([244.,233.,222.]), name='image_rgb')
+relu = tf.nn.relu(image_rgb)
+softmax = tf.nn.softmax(image_rgb)
+log = tf.log(image_rgb)
 p = w*x #tf.Variable(tf.constant([3.]), name='w') * tf.Variable(tf.constant([2.]), name='x')
 y = p+b
 s = -y
 t = s +y_
 f = t*t
+gradient_test = a*image_rgb
 #f = -(tf.Variable(tf.constant([3.]), name='w') * tf.Variable(tf.constant([2.]), name='x')+tf.Variable(tf.constant([1.]), name='b')) + tf.Variable(tf.constant[5.],name='y')
 #f = -tf.Variable(tf.constant([3.]), name='w') * tf.Variable(tf.constant([2.]), name='x') - tf.Variable(tf.constant([1.]), name='b') + tf.Variable(tf.constant[5.],name='y')
 '''
@@ -41,6 +51,9 @@ print 't:',t
 print 'f:',f
 '''
 gx, gb, gw, gp, gy, gy_,gs, gt, gf = tf.gradients(f, [x, b, w, p, y, y_,s, t, f])
+gradient_softmax = tf.gradients(softmax,image_rgb)
+gradient_imagergb = tf.gradients(gradient_test,image_rgb)
+
 '''
 print 'x:',gx #x
 print 'b:',gb #b
@@ -52,17 +65,23 @@ print 's:',gs
 print 't:',gt
 print 'f:',gf
 '''
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 
 opt = tf.train.GradientDescentOptimizer(1.0)
 train = opt.minimize(f)
 
 with tf.Session() as sess:
     sess.run(init)
+    print 'log',sess.run(log)
+    print 'relu',sess.run(relu)
+    print 'softmax',sess.run(softmax)
+    print 'gradient softmax',sess.run(gradient_softmax)
+    print 'gradient constant',sess.run(gradient_imagergb)
     print '---------- initialvariables ----------'
     print 'x:%.2f, w:%.2f, b:%.2f' % (sess.run(x), sess.run(w), sess.run(b))
     print 'p:%.2f, y:%.2f, y_:%.2f'% (sess.run(p), sess.run(y), sess.run(y_))
     print 's:%.2f, t:%.2f, f:%.2f' % (sess.run(s), sess.run(t), sess.run(f))
+    print 'image rgb',sess.run(image_rgb)
     print '\n'
     
     print '---------- gradient ----------'

@@ -134,8 +134,6 @@ def showarray(a, fmt='jpeg' ,i=0):
         s.save('/home/roboworks/deepdream/image/etc/{}.jpg'.format(test_name))
     #display(Image(data=f.getvalue()))
 
-
-
 def visstd(a, s=0.1):
     #可視化するための画像範囲を正規化
     '''
@@ -156,7 +154,7 @@ def T(layer):
 
 # use t_inputdata
 # 層にわかりやすく反応させるため（値が似ているため）にグレー画像からrgbを計算していく
-def render_naive(t_obj, img0=img_noise, iter_n=20, step=3.0):
+def render_naive(t_obj, img0=img_noise, iter_n=20, step=1.0):
     print('----------render naive----------')
     print('input_obj_name:',t_obj.shape,type(t_obj))
     t_score = tf.reduce_mean(t_obj) # defining the optimization objectiveオプティマイズする＝微分して引く更新
@@ -168,35 +166,33 @@ def render_naive(t_obj, img0=img_noise, iter_n=20, step=3.0):
         #print('t_score:',t_score)
         #print('t_grad:',t_grad)
         #微分とスコアを走らせる？
+        print('----------------number {}---------------'.format(i+1))
         print('t_grad:',t_grad,type(t_grad))
         print('t_score:',t_score,type(t_score))
         print('t_input:',img,type(img))
         g, score = sess.run([t_grad, t_score], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
-        print('g:',g)
+        print('gradient answer:',g)
         print('score:',score,type(t_score))
         # normalizing the gradient, so the same step size should work
+        # グラデーションを正規化するので、同じステップサイズで作業する必要があります。
         #print('g:',g)極小の値,stdはgの標準偏差を求めるgの値が小さくなるように処理していく
         print('g.std()',g.std())
-        g /= g.std()+1e-8         #for different layers and networks g/g.std()+10^-8
-        img += g*step
+        # 1e-8=0.00000001
+        #for different layers and networks g/g.std()+10^-8
+        g = g / g.std()+1e-8
+        img = img + g*step
+        #time.sleep(10)
         #print(score, end = ' ')
     #clear_output()
-    #print('img:',img.shape)
+    print('img:',img)
     time.sleep(5)
-    print('visstd(img):',visstd(img).shape)
     showarray(visstd(img))
-
 #t_objにT(layer)[:,:,:,channel]
 print('T(layer)[:,:,:,channel]:',T(layer)[:,:,:,channel])
 test_name = raw_input('input test name:>>')
 render_naive(T(layer)[:,:,:,channel])
 #sys.exit()
 
-
-
-
-
-# f
 def tffunc(*argtypes):
     '''Helper that transforms TF-graph generating function into a regular one.
     See "resize" function below.
@@ -221,13 +217,7 @@ def resize(img, size):
     #print('resize_return',tf.image.resize_bilinear(img, size)[0,:,:,:])
     return tf.image.resize_bilinear(img, size)[0,:,:,:]  
 resize = tffunc(np.float32, np.int32)(resize)
-
-
 #print('resize',resize)
-
-
-
-
 
 def calc_grad_tiled(img, t_grad, tile_size=512):
     #print('----------calc grad tiled----------')
