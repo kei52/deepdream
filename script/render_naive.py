@@ -57,20 +57,22 @@ channel = 139 # picking some feature channel to visualize
 img_noise = np.random.uniform(size=(224,224,3)) + 100.0
 count = []
 def showarray(a, fmt='jpeg' ,i=0):
-    print('----------showarray----------')
+    print('----------showarray------------------')
     #print('showarray a.shape:',a.shape,type(a))
     count.append(i)
+    print(a[0][0],np.clip(a, 0, 1)[0][0],(a*255)[0][0],np.uint8(np.clip(a, 0, 1)*255)[0][0])
     a = np.uint8(np.clip(a, 0, 1)*255)
-    print(a[0][0])
     f = BytesIO()
     PIL.Image.fromarray(a).save(f, fmt)
     s = PIL.Image.fromarray(a)
     s.save('/home/roboworks/deepdream/image/render_naive/{}.jpg'.format(input_image))
+    print('\n')
 
 def visstd(a, s=0.1):
     #可視化するための画像範囲を正規化
     print('----------------visstd---------------')
-    print(((a-a.mean())/max(a.std(), 1e-4)*s + 0.5)[0][0])
+    print('a.mean():{}'.format(a.mean()),'max(a.std():{}, 1e-4):{}'.format(max(a.std(), 1e-4),a.std()),'')
+    print('a-a.mean())/max(a.std(), 1e-4)*s + 0.5:',((a-a.mean())/max(a.std(), 1e-4)*s + 0.5)[0][0])
     return (a-a.mean())/max(a.std(), 1e-4)*s + 0.5
 
 # get layer func
@@ -82,28 +84,33 @@ def T(layer):
 # use t_inputdata
 # 層にわかりやすく反応させるため（値が似ているため）にグレー画像からrgbを計算していく
 def render_naive(t_obj, img0=img_noise, iter_n=20, step=1.0):
-    print('----------render naive----------')
-    print('input_obj_name:',t_obj.shape,type(t_obj))
-    t_score = tf.reduce_mean(t_obj) # defining the optimization objectiveオプティマイズする＝微分して引く更新
+    #print('----------render naive----------')
+    #print('input_obj_name:',t_obj.shape,type(t_obj))
+    t_score = tf.reduce_mean(t_obj) # defining the optimization objective
     #t_scoreをt_inputで微分を行う
-    t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!＝微分gradient
-    img = img0.copy()#img0同じ配列を二つ用意し別々に扱うため?
+    t_grad = tf.gradients(t_score, t_input)[0] # behold the power of automatic differentiation!
+    img = img0.copy()#imgの初期化
     for i in range(iter_n):#20回同様の作業を行う
         #gには[t_grad, t_score],scoreには [t_input:img]
         print('----------------number {}---------------'.format(i+1))
-        print('t_input:',img[0][0],type(img))
-        score, g = sess.run([t_score, t_grad], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
-        print('gradient answer:',g[0][0])
-        print('score:',score,type(t_score))
+        print('t_input:',img[0][0])
+        score, g, obj = sess.run([t_score, t_grad, t_obj], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
+        print('obj',obj[0][0][:3],obj.shape)
+        print('grad:',g[0][0])
+        print('Sc:',score)
         # normalizing the gradient, so the same step size should work
         # グラデーションを正規化するので、同じステップサイズで作業する必要があります。
         #print('g:',g)極小の値,stdはgの標準偏差を求めるgの値が小さくなるように処理していく
-        print('g.std()',g.std())
+        print('grad.std()',g.std())
         # 1e-8=0.00000001
         #for different layers and networks g/g.std()+10^-8
+        print('grad / grad.std:{}'.format((g/g.std())[0][0]),' + 0.00000001')
         g = g / g.std()+1e-8
+        print('grad_:',g[0][0])
+        print('I:{} + grad:{}'.format(img[0][0],(g*step)[0][0]))
         img = img + g*step
-    print('img:',img[0][0])
+        print('I_:',img[0][0])
+    print('final I:',img[0][0])
     showarray(visstd(img))
 
 #print('T(layer)[:,:,:,channel]:',T(layer)[:,:,:,channel])
