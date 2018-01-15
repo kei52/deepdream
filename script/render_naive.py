@@ -96,8 +96,8 @@ def render_naive(t_obj, img0=img_noise, iter_n=20, step=1.0):
         print('t_input:',img[0][0])
         score, g, obj = sess.run([t_score, t_grad, t_obj], {t_input:img})#g, scoreにRUN（処理）させて出した値が入る
         print('obj',obj[0][0][:3],obj.shape)
-        print('grad:',g[0][0])
         print('Sc:',score)
+        print('grad:',g[0][0])
         # normalizing the gradient, so the same step size should work
         # グラデーションを正規化するので、同じステップサイズで作業する必要があります。
         #print('g:',g)極小の値,stdはgの標準偏差を求めるgの値が小さくなるように処理していく
