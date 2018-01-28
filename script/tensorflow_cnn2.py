@@ -90,19 +90,25 @@ saver = tf.train.Saver()
 # 学習
 print("Train")
 saver = tf.train.Saver()
+
+
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
+    
+    with tf.name_scope('summary'):
+        writer = tf.summary.FileWriter('/tmp/tensorboard-sample', sess.graph)
+        tf.summary.scalar('loss', cross_entropy)
+        merged = tf.summary.merge_all()
+
+    
     for epoch in range(EPOCH_NUM):
         perm = np.random.permutation(N)
         total_loss = 0
         for i in range(0, N, BATCH_SIZE):
             batch_x = train_x[perm[i:i+BATCH_SIZE]]
             batch_y = train_y[perm[i:i+BATCH_SIZE]]
-            cross_entropy2 = cross_entropy.eval(feed_dict={x_: batch_x, y_: batch_y})
-            summary_writer = tf.summary.FileWriter('data', graph=sess.graph)
-            tf.summary.scalar('one_plus_one_summary', cross_entropy2)
-            print 'cross_entropy:{}'.format(cross_entropy2)
-            total_loss = total_loss + cross_entropy2
+            cross_entropy.eval(feed_dict={x_: batch_x, y_: batch_y})
+            total_loss = total_loss + cross_entropy
             train_step.run(feed_dict={x_: batch_x, y_: batch_y})
             print 'i:{},total loss:{},\n'.format(i,total_loss)
         test_accuracy = accuracy.eval(feed_dict={x_: test_x, y_: test_y})

@@ -146,14 +146,6 @@ def T(layer):
     print('function T(layer):',type(graph.get_tensor_by_name("import/%s:0"%layer)))
     return graph.get_tensor_by_name("import/%s:0"%layer)
 
-'''
-cut1
-'''
-
-
-
-
-
 # f
 def tffunc(*argtypes):
     '''Helper that transforms TF-graph generating function into a regular one.
